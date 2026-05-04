@@ -24,7 +24,7 @@ interface AppState {
   enemies: Enemy[];
   xAxisStat: StatKey;
   xAxisRange: { min: number; max: number; step: number };
-  yMetric: "expectedDamage" | "finalDamage" | "critChance" | "hitChance" | "dps";
+  yMetric: "expectedDamage" | "finalDamage" | "critChance" | "hitChance" | "dps" | "bacDamage";
   combatType: "melee" | "ranged" | "magic";
   attackDirection: "front" | "side" | "back";
   isPvP: boolean;
@@ -54,7 +54,7 @@ interface AppState {
   // Actions - Chart Settings
   setXAxisStat: (stat: StatKey) => void;
   setXAxisRange: (range: { min: number; max: number; step: number }) => void;
-  setYMetric: (metric: "expectedDamage" | "finalDamage" | "critChance" | "hitChance" | "dps") => void;
+  setYMetric: (metric: "expectedDamage" | "finalDamage" | "critChance" | "hitChance" | "dps" | "bacDamage") => void;
   setCombatType: (type: "melee" | "ranged" | "magic") => void;
   setAttackDirection: (direction: "front" | "side" | "back") => void;
   setIsPvP: (isPvP: boolean) => void;

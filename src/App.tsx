@@ -23,6 +23,7 @@ import { Card, CardContent } from "./components/ui/card";
 import { Trash2, Star, Plus, Download } from "lucide-react";
 import { serializeState } from "./utils/urlState";
 import { cn } from "./lib/utils";
+import { computeBAC, computeBACBreakdown } from "./lib/bac";
 
 const DamageChart = lazy(() =>
   import("./components/DamageChart").then((m) => ({ default: m.DamageChart }))
@@ -146,12 +147,12 @@ const BuildSidebar = memo(function BuildSidebar({
           onValueChange={setActiveBuildTab}
           className="w-full"
         >
-          <TabsList className="flex w-full overflow-x-auto overflow-y-hidden tabs-scrollable h-auto p-0.5 bg-muted/30 border border-border/60">
+          <TabsList className="flex flex-col w-full h-auto p-1 gap-1 bg-muted/30 border border-border/60">
             {builds.map((build: any, index: number) => (
               <TabsTrigger
                 key={index}
                 value={index.toString()}
-                className="text-xs flex-shrink-0 min-w-[100px] gap-1"
+                className="text-xs w-full justify-start gap-1.5 px-2"
               >
                 <span
                   role="button"
@@ -175,6 +176,7 @@ const BuildSidebar = memo(function BuildSidebar({
                   />
                 </span>
                 {build.name || `Build ${index + 1}`}
+                <BACBadge build={build} />
               </TabsTrigger>
             ))}
           </TabsList>
@@ -184,6 +186,7 @@ const BuildSidebar = memo(function BuildSidebar({
               value={index.toString()}
               className="mt-3"
             >
+              <BACSummary build={build} />
               <BuildForm
                 build={build}
                 combatType={combatType}
@@ -209,6 +212,31 @@ const BuildSidebar = memo(function BuildSidebar({
     </div>
   );
 });
+
+function BACBadge({ build }: { build: any }) {
+  const bac = computeBAC(build);
+  if (!isFinite(bac)) return null;
+  return (
+    <span className="ml-1 text-[10px] font-mono text-muted-foreground">
+      {bac.toFixed(2)}×
+    </span>
+  );
+}
+
+function BACSummary({ build }: { build: any }) {
+  const b = computeBACBreakdown(build);
+  return (
+    <div className="mb-3 rounded-md border border-border/60 bg-muted/30 px-3 py-2 flex items-center justify-between text-xs">
+      <span className="text-muted-foreground">BAC Coefficient</span>
+      <span className="font-mono">
+        <span className="text-muted-foreground">
+          A {b.attackSpeedPct.toFixed(0)}% · CDR {b.cdrPct.toFixed(0)}% · Buff {b.buffPct.toFixed(0)}%
+        </span>
+        <span className="ml-2 text-foreground font-semibold">{b.bac.toFixed(2)}×</span>
+      </span>
+    </div>
+  );
+}
 
 const EnemySidebar = memo(function EnemySidebar({
   combatType,
@@ -254,12 +282,12 @@ const EnemySidebar = memo(function EnemySidebar({
           onValueChange={setActiveEnemyTab}
           className="w-full"
         >
-          <TabsList className="flex w-full overflow-x-auto overflow-y-hidden tabs-scrollable h-auto p-0.5 bg-muted/30 border border-border/60">
+          <TabsList className="flex flex-col w-full h-auto p-1 gap-1 bg-muted/30 border border-border/60">
             {enemies.map((enemy: any, index: number) => (
               <TabsTrigger
                 key={index}
                 value={index.toString()}
-                className="text-xs flex-shrink-0 min-w-[100px]"
+                className="text-xs w-full justify-start px-2"
               >
                 {enemy.name || `Enemy ${index + 1}`}
               </TabsTrigger>

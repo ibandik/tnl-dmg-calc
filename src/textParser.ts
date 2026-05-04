@@ -96,6 +96,9 @@ export function parseTextToBuild(
     // Cooldown Speed
     cooldownSpeed: parseStatValue(stats["Cooldown Speed"]),
 
+    // Buff Duration (percentage)
+    buffDuration: parsePercentage(stats["Buff Duration"]),
+
     // Off-hand chance
     offhandChance:
       (parsePercentage(stats["Off-Hand Weapon Attack Chance"]) || 0) / 100,

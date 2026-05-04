@@ -22,9 +22,10 @@ interface ChartControlsProps {
     | "finalDamage"
     | "critChance"
     | "hitChance"
-    | "dps";
+    | "dps"
+    | "bacDamage";
   onYMetricChange: (
-    metric: "expectedDamage" | "finalDamage" | "critChance" | "hitChance" | "dps"
+    metric: "expectedDamage" | "finalDamage" | "critChance" | "hitChance" | "dps" | "bacDamage"
   ) => void;
   // combatType is set via the header pill; kept here for backward compat
   combatType: "melee" | "ranged" | "magic";
@@ -72,6 +73,7 @@ const Y_METRIC_OPTIONS = [
   { value: "expectedDamage" as const, label: "Expected Final Damage" },
   { value: "finalDamage" as const, label: "Single Hit Damage" },
   { value: "dps" as const, label: "DPS (Damage per Second)" },
+  { value: "bacDamage" as const, label: "BAC Coefficient × Damage" },
   { value: "critChance" as const, label: "Crit Chance" },
   { value: "hitChance" as const, label: "Hit Chance" },
 ];

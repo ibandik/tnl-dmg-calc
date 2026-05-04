@@ -55,6 +55,9 @@ export interface Build {
   // Cooldown Speed
   cooldownSpeed?: number; // cooldown speed stat (e.g., 40.9)
 
+  // Buff Duration (percentage, e.g. 93.1 for 93.1%) — used by BAC coefficient
+  buffDuration?: number;
+
   // PvE
   speciesDamageBoost?: number;
   pveDamageMultiplier?: number;

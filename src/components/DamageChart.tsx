@@ -13,13 +13,14 @@ import {
 import { Build, Enemy, StatKey, ChartPoint } from "../types";
 import { calculateDamage, calculateDPS } from "../calculations";
 import { formatCompact } from "../lib/utils";
+import { computeBAC } from "../lib/bac";
 
 interface DamageChartProps {
   builds: Build[];
   enemy: Enemy;
   xAxisStat: StatKey;
   xAxisRange: { min: number; max: number; step: number };
-  yMetric: "expectedDamage" | "finalDamage" | "critChance" | "hitChance" | "dps";
+  yMetric: "expectedDamage" | "finalDamage" | "critChance" | "hitChance" | "dps" | "bacDamage";
   combatType: "melee" | "ranged" | "magic";
   attackDirection: "front" | "side" | "back";
   isPvP?: boolean;
@@ -147,6 +148,21 @@ export const DamageChart = memo(function DamageChart({
             monsterDamageBonus
           );
           point[`build${index}`] = dps;
+        } else if (yMetric === "bacDamage") {
+          const breakdown = calculateDamage(
+            modifiedBuild,
+            modifiedEnemy,
+            combatType,
+            attackDirection,
+            isPvP,
+            skillPotency,
+            skillFlatAdd,
+            hitsPerCast,
+            weakenSkillPotency,
+            weakenSkillFlatAdd,
+            monsterDamageBonus
+          );
+          point[`build${index}`] = breakdown.expectedDamage * computeBAC(modifiedBuild);
         } else {
           const breakdown = calculateDamage(
             modifiedBuild,
@@ -161,7 +177,7 @@ export const DamageChart = memo(function DamageChart({
             weakenSkillFlatAdd,
             monsterDamageBonus
           );
-          point[`build${index}`] = breakdown[yMetric];
+          point[`build${index}`] = breakdown[yMetric as keyof typeof breakdown] as number;
         }
       });
 

@@ -211,6 +211,20 @@ export const BuildForm = memo(function BuildForm({
                 />
                 <Field field="cooldownSpeed" label="Cooldown Speed" step="0.1" placeholder="40.9" />
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field
+                  field="buffDuration"
+                  label="Buff Duration %"
+                  step="0.1"
+                  placeholder="0"
+                  info={
+                    <p className="max-w-xs">
+                      Total stat from gear ("Buff Duration" in questlog).
+                      <br />Caps at 150% for the BAC coefficient.
+                    </p>
+                  }
+                />
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">CDR % (computed)</Label>
                 <Input
