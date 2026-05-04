@@ -15,6 +15,7 @@ interface SkillConfig {
   cooldownTime: number;
   castTime: number;
   skillCooldownSpecialization: number;
+  monsterDamageBonus?: number;
 }
 
 interface AppState {
@@ -31,7 +32,8 @@ interface AppState {
   activeBuildTab: string;
   activeEnemyTab: string;
   speedLimiter: 'cooldown' | 'castTime';
-  
+  currentBuildIndex: number | null;
+
   // Actions - Builds
   addBuild: () => void;
   updateBuild: (index: number, build: Partial<Build>) => void;
@@ -39,6 +41,7 @@ interface AppState {
   removeBuild: (index: number) => void;
   importBuild: (build: Build) => void;
   setActiveBuildTab: (tab: string) => void;
+  setCurrentBuild: (index: number | null) => void;
   
   // Actions - Enemies
   addEnemy: () => void;
@@ -94,6 +97,7 @@ export const defaultSkillConfig: SkillConfig = {
   cooldownTime: 10,
   castTime: 1,
   skillCooldownSpecialization: 0,
+  monsterDamageBonus: 0,
 };
 
 export const defaultEnemy: Enemy = {
@@ -170,6 +174,7 @@ export const useStore = create<AppState>()(
       activeBuildTab: initialUrlState?.activeBuildTab || "0",
       activeEnemyTab: initialUrlState?.activeEnemyTab || "0",
       speedLimiter: initialUrlState?.speedLimiter || 'cooldown',
+      currentBuildIndex: null,
       
       // Build Actions
       addBuild: () => {
@@ -203,13 +208,22 @@ export const useStore = create<AppState>()(
         set((state) => {
           if (state.builds.length > 0) {
             state.builds.splice(index, 1);
-            
+
+            // Adjust currentBuildIndex
+            if (state.currentBuildIndex !== null) {
+              if (state.currentBuildIndex === index) {
+                state.currentBuildIndex = null;
+              } else if (state.currentBuildIndex > index) {
+                state.currentBuildIndex -= 1;
+              }
+            }
+
             // If all builds are removed, reset the active tab to "0"
             if (state.builds.length === 0) {
               state.activeBuildTab = "0";
             } else {
               const currentTab = parseInt(state.activeBuildTab);
-              
+
               if (currentTab >= state.builds.length) {
                 state.activeBuildTab = (state.builds.length - 1).toString();
               } else if (currentTab > index) {
@@ -228,6 +242,11 @@ export const useStore = create<AppState>()(
       },
       
       setActiveBuildTab: (tab) => set({ activeBuildTab: tab }),
+
+      setCurrentBuild: (index) => set((state) => {
+        // Toggle: clicking the already-current build clears it
+        state.currentBuildIndex = state.currentBuildIndex === index ? null : index;
+      }),
       
       // Enemy Actions
       addEnemy: () => {

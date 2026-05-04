@@ -51,7 +51,8 @@ export function getCombatTypeStats(
   build: Build,
   enemy: Enemy,
   combatType: "melee" | "ranged" | "magic",
-  attackDirection: "front" | "side" | "back" = "front"
+  attackDirection: "front" | "side" | "back" = "front",
+  isBoss: boolean = false
 ) {
   let buildStats = {
     critical:
@@ -74,6 +75,28 @@ export function getCombatTypeStats(
         : build.magicHeavyAttack || 0,
   };
 
+  // Apply boss offensive bonuses (additive)
+  if (isBoss) {
+    buildStats.critical +=
+      combatType === "melee"
+        ? build.bossMeleeCritical || 0
+        : combatType === "ranged"
+        ? build.bossRangedCritical || 0
+        : build.bossMagicCritical || 0;
+    buildStats.hit +=
+      combatType === "melee"
+        ? build.bossMeleeHit || 0
+        : combatType === "ranged"
+        ? build.bossRangedHit || 0
+        : build.bossMagicHit || 0;
+    buildStats.heavyAttack +=
+      combatType === "melee"
+        ? build.bossMeleeHeavyAttack || 0
+        : combatType === "ranged"
+        ? build.bossRangedHeavyAttack || 0
+        : build.bossMagicHeavyAttack || 0;
+  }
+
   // Apply positional modifiers based on attack direction
   if (attackDirection === "back") {
     buildStats.critical += build.backCriticalHit || 0;
@@ -85,25 +108,33 @@ export function getCombatTypeStats(
     buildStats.heavyAttack += build.sideHeavyAttackChance || 0;
   }
 
+  // Pick endurance/evasion/heavyEvasion: boss-variant if boss target, else base
+  const pickEndurance = () => {
+    if (combatType === "melee")
+      return isBoss ? enemy.bossMeleeEndurance ?? enemy.meleeEndurance ?? 0 : enemy.meleeEndurance || 0;
+    if (combatType === "ranged")
+      return isBoss ? enemy.bossRangedEndurance ?? enemy.rangedEndurance ?? 0 : enemy.rangedEndurance || 0;
+    return isBoss ? enemy.bossMagicEndurance ?? enemy.magicEndurance ?? 0 : enemy.magicEndurance || 0;
+  };
+  const pickEvasion = () => {
+    if (combatType === "melee")
+      return isBoss ? enemy.bossMeleeEvasion ?? enemy.meleeEvasion ?? 0 : enemy.meleeEvasion || 0;
+    if (combatType === "ranged")
+      return isBoss ? enemy.bossRangedEvasion ?? enemy.rangedEvasion ?? 0 : enemy.rangedEvasion || 0;
+    return isBoss ? enemy.bossMagicEvasion ?? enemy.magicEvasion ?? 0 : enemy.magicEvasion || 0;
+  };
+  const pickHeavyEvasion = () => {
+    if (combatType === "melee")
+      return isBoss ? enemy.bossMeleeHeavyAttackEvasion ?? enemy.meleeHeavyAttackEvasion ?? 0 : enemy.meleeHeavyAttackEvasion || 0;
+    if (combatType === "ranged")
+      return isBoss ? enemy.bossRangedHeavyAttackEvasion ?? enemy.rangedHeavyAttackEvasion ?? 0 : enemy.rangedHeavyAttackEvasion || 0;
+    return isBoss ? enemy.bossMagicHeavyAttackEvasion ?? enemy.magicHeavyAttackEvasion ?? 0 : enemy.magicHeavyAttackEvasion || 0;
+  };
+
   const enemyStats = {
-    endurance:
-      combatType === "melee"
-        ? enemy.meleeEndurance || 0
-        : combatType === "ranged"
-        ? enemy.rangedEndurance || 0
-        : enemy.magicEndurance || 0,
-    evasion:
-      combatType === "melee"
-        ? enemy.meleeEvasion || 0
-        : combatType === "ranged"
-        ? enemy.rangedEvasion || 0
-        : enemy.magicEvasion || 0,
-    heavyAttackEvasion:
-      combatType === "melee"
-        ? enemy.meleeHeavyAttackEvasion || 0
-        : combatType === "ranged"
-        ? enemy.rangedHeavyAttackEvasion || 0
-        : enemy.magicHeavyAttackEvasion || 0,
+    endurance: pickEndurance(),
+    evasion: pickEvasion(),
+    heavyAttackEvasion: pickHeavyEvasion(),
     defense:
       combatType === "melee"
         ? enemy.meleeDefense || 0
@@ -233,13 +264,17 @@ export function calculateDamage(
   skillFlatAdd: number = 0,
   hitsPerCast: number = 1,
   weakenSkillPotency: number = 0,
-  weakenSkillFlatAdd: number = 0
+  weakenSkillFlatAdd: number = 0,
+  monsterDamageBonus: number = 0 // percentage, e.g. 60 for "+60% to monsters"
 ): DamageBreakdown {
+  // PvE always means boss target in this app's intended use
+  const isBoss = !isPVP;
   const { buildStats, enemyStats } = getCombatTypeStats(
     build,
     enemy,
     combatType,
-    attackDirection
+    attackDirection,
+    isBoss
   );
 
   // Calculate critical damage bonus
@@ -320,14 +355,18 @@ export function calculateDamage(
     ? 1 + pvpDamageMultiplier()
     : 1 + pveDamageMultiplier(build.pveDamageMultiplier || 0);
 
-  // 2c: Apply all multipliers: Defense% * Block% * Skill Damage Boost% * Species Damage Boost% * PVE% (or PVP%)
+  // Per-skill bonus damage to monsters (PvE only)
+  const monsterMult = isBoss ? 1 + (monsterDamageBonus || 0) / 100 : 1;
+
+  // 2c: Apply all multipliers: Defense% * Block% * Skill Damage Boost% * Species Damage Boost% * PVE% (or PVP%) * MonsterBonus%
   // Note: Critical damage is already included in base damage calculation
   const allMultipliers =
     defenseMultiplier *
     blockMult *
     skillBoostMult *
     speciesBoostMult *
-    pvpPveMultiplier;
+    pvpPveMultiplier *
+    monsterMult;
   const afterMultipliers = coreSkillDamage * allMultipliers;
 
   // 2d: Apply Heavy Attack multiplier (heavyFlag = 2 if heavy triggers, 1 otherwise)
@@ -335,14 +374,20 @@ export function calculateDamage(
     buildStats.heavyAttack,
     enemyStats.heavyAttackEvasion
   );
-  const expectedHeavyMultiplier = heavyProb * 2 + (1 - heavyProb) * 1;
+  // Heavy Attack Damage % is additive to the +100% bonus portion only.
+  // E[heavyMult] = 1 + pHeavy * (1 + heavyAttackDamage%)
+  const heavyDmgBonus = (build.heavyAttackDamage || 0) / 100;
+  const expectedHeavyMultiplier = 1 + heavyProb * (1 + heavyDmgBonus);
   const afterHeavyMult = afterMultipliers * expectedHeavyMultiplier;
 
   // 2e: Add Bonus Damage - AFTER heavy attack multiplier per source
   // 2f: Subtract Damage Reduction
+  const flatReduction = isBoss
+    ? enemy.bossDamageReduction ?? enemy.damageReduction ?? 0
+    : enemy.damageReduction || 0;
   const finalDamage = Math.max(
     0,
-    afterHeavyMult + (build.bonusDamage || 0) - (enemy.damageReduction || 0)
+    afterHeavyMult + (build.bonusDamage || 0) - flatReduction
   );
 
   // Step 3: Apply hit chance to get expected damage
@@ -415,7 +460,8 @@ export function calculateDPS(
   weakenSkillFlatAdd: number = 0,
   skillCooldownSpecialization: number = 0,
   useCDR: boolean = true,
-  useAttackSpeed: boolean = true
+  useAttackSpeed: boolean = true,
+  monsterDamageBonus: number = 0
 ): number {
   const damage = calculateDamage(
     build,
@@ -427,9 +473,10 @@ export function calculateDPS(
     skillFlatAdd,
     hitsPerCast,
     weakenSkillPotency,
-    weakenSkillFlatAdd
+    weakenSkillFlatAdd,
+    monsterDamageBonus
   );
-  
+
   // Always apply attack speed to cast time
   const actualCastTime = calculateActualCastTime(castTime, build.attackSpeedTime);
   

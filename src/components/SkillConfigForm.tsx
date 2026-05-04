@@ -18,6 +18,7 @@ interface SkillConfig {
   cooldownTime: number;
   castTime: number;
   skillCooldownSpecialization: number;
+  monsterDamageBonus?: number;
 }
 
 interface SkillConfigFormProps {
@@ -38,7 +39,7 @@ export function SkillConfigForm({ config, onChange }: SkillConfigFormProps) {
           <CardTitle className="text-lg">Skill Configuration</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-1">
                 <Label htmlFor="skillPotency" className="text-xs">
@@ -123,6 +124,36 @@ export function SkillConfigForm({ config, onChange }: SkillConfigFormProps) {
               onChange={(e) => handleInputChange("hitsPerCast", e.target.value)}
               className="h-8 text-xs"
               placeholder="1"
+            />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <Label htmlFor="monsterDamageBonus" className="text-xs">
+                +% Damage to Monsters
+              </Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">
+                    Per-skill bonus damage vs monsters (PvE only).
+                    <br />
+                    Example: skill text says "+60% damage to monsters" → enter <b>60</b>.
+                    <br />
+                    Applied as a multiplier in the damage chain.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Input
+              id="monsterDamageBonus"
+              type="number"
+              step="1"
+              value={config.monsterDamageBonus || 0}
+              onChange={(e) => handleInputChange("monsterDamageBonus" as keyof SkillConfig, e.target.value)}
+              className="h-8 text-xs"
+              placeholder="0"
             />
           </div>
         </div>

@@ -368,7 +368,7 @@ export const BuildForm = memo(function BuildForm({
           <h4 className="text-sm font-medium text-muted-foreground">
             Heavy Attack
           </h4>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             <div className="space-y-1">
               <Label htmlFor="meleeHeavyAttack" className="text-xs">
                 Melee Heavy
@@ -409,6 +409,21 @@ export const BuildForm = memo(function BuildForm({
                   handleInputChange("magicHeavyAttack", e.target.value)
                 }
                 className="h-8 text-xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="heavyAttackDamage" className="text-xs">
+                Heavy Atk Dmg %
+              </Label>
+              <Input
+                id="heavyAttackDamage"
+                type="number"
+                value={build.heavyAttackDamage || 0}
+                onChange={(e) =>
+                  handleInputChange("heavyAttackDamage", e.target.value)
+                }
+                className="h-8 text-xs"
+                placeholder="0"
               />
             </div>
           </div>
@@ -490,6 +505,59 @@ export const BuildForm = memo(function BuildForm({
                 }
                 className="h-8 text-xs"
               />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground">
+            Boss Bonuses (applied when target is a boss)
+          </h4>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="bossMeleeCritical" className="text-xs">Boss Melee Crit</Label>
+              <Input id="bossMeleeCritical" type="number" value={build.bossMeleeCritical || 0}
+                onChange={(e) => handleInputChange("bossMeleeCritical", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bossRangedCritical" className="text-xs">Boss Ranged Crit</Label>
+              <Input id="bossRangedCritical" type="number" value={build.bossRangedCritical || 0}
+                onChange={(e) => handleInputChange("bossRangedCritical", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bossMagicCritical" className="text-xs">Boss Magic Crit</Label>
+              <Input id="bossMagicCritical" type="number" value={build.bossMagicCritical || 0}
+                onChange={(e) => handleInputChange("bossMagicCritical", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bossMeleeHit" className="text-xs">Boss Melee Hit</Label>
+              <Input id="bossMeleeHit" type="number" value={build.bossMeleeHit || 0}
+                onChange={(e) => handleInputChange("bossMeleeHit", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bossRangedHit" className="text-xs">Boss Ranged Hit</Label>
+              <Input id="bossRangedHit" type="number" value={build.bossRangedHit || 0}
+                onChange={(e) => handleInputChange("bossRangedHit", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bossMagicHit" className="text-xs">Boss Magic Hit</Label>
+              <Input id="bossMagicHit" type="number" value={build.bossMagicHit || 0}
+                onChange={(e) => handleInputChange("bossMagicHit", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bossMeleeHeavyAttack" className="text-xs">Boss Melee Heavy</Label>
+              <Input id="bossMeleeHeavyAttack" type="number" value={build.bossMeleeHeavyAttack || 0}
+                onChange={(e) => handleInputChange("bossMeleeHeavyAttack", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bossRangedHeavyAttack" className="text-xs">Boss Ranged Heavy</Label>
+              <Input id="bossRangedHeavyAttack" type="number" value={build.bossRangedHeavyAttack || 0}
+                onChange={(e) => handleInputChange("bossRangedHeavyAttack", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bossMagicHeavyAttack" className="text-xs">Boss Magic Heavy</Label>
+              <Input id="bossMagicHeavyAttack" type="number" value={build.bossMagicHeavyAttack || 0}
+                onChange={(e) => handleInputChange("bossMagicHeavyAttack", e.target.value)} className="h-8 text-xs" />
             </div>
           </div>
         </div>

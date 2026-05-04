@@ -67,6 +67,18 @@ export function parseTextToBuild(
     rangedHeavyAttack: parseStatValue(stats["Ranged Heavy Attack Chance"]),
     meleeHeavyAttack: parseStatValue(stats["Melee Heavy Attack Chance"]),
     magicHeavyAttack: parseStatValue(stats["Magic Heavy Attack Chance"]),
+    heavyAttackDamage: parsePercentage(stats["Heavy Attack Damage"]),
+
+    // Boss offensive bonuses
+    bossMeleeCritical: parseStatValue(stats["Boss Melee Critical Hit Chance"]),
+    bossRangedCritical: parseStatValue(stats["Boss Ranged Critical Hit Chance"]),
+    bossMagicCritical: parseStatValue(stats["Boss Magic Critical Hit Chance"]),
+    bossMeleeHit: parseStatValue(stats["Boss Melee Hit Chance"]),
+    bossRangedHit: parseStatValue(stats["Boss Ranged Hit Chance"]),
+    bossMagicHit: parseStatValue(stats["Boss Magic Hit Chance"]),
+    bossMeleeHeavyAttack: parseStatValue(stats["Boss Melee Heavy Attack Chance"]),
+    bossRangedHeavyAttack: parseStatValue(stats["Boss Ranged Heavy Attack Chance"]),
+    bossMagicHeavyAttack: parseStatValue(stats["Boss Magic Heavy Attack Chance"]),
 
     // Hit stats
     rangedHit: parseStatValue(stats["Ranged Hit Chance"]),

@@ -30,10 +30,6 @@ interface ChartControlsProps {
   ) => void;
   combatType: "melee" | "ranged" | "magic";
   onCombatTypeChange: (type: "melee" | "ranged" | "magic") => void;
-  attackDirection: "front" | "side" | "back";
-  onAttackDirectionChange: (direction: "front" | "side" | "back") => void;
-  isPvP: boolean;
-  onIsPvPChange: (isPvP: boolean) => void;
 }
 
 const ATTACKER_STATS: { value: StatKey; label: string }[] = [
@@ -110,10 +106,6 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
   onYMetricChange,
   combatType,
   onCombatTypeChange,
-  attackDirection,
-  onAttackDirectionChange,
-  isPvP,
-  onIsPvPChange,
 }) => {
   return (
     <Card>
@@ -164,77 +156,6 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Attack Direction</Label>
-            <div className="flex gap-2">
-              <Button
-                variant={attackDirection === "front" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onAttackDirectionChange("front")}
-                className={cn(
-                  "flex-1",
-                  attackDirection === "front" &&
-                    "bg-purple-600 hover:bg-purple-700 text-white"
-                )}
-              >
-                Front
-              </Button>
-              <Button
-                variant={attackDirection === "side" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onAttackDirectionChange("side")}
-                className={cn(
-                  "flex-1",
-                  attackDirection === "side" &&
-                    "bg-orange-600 hover:bg-orange-700 text-white"
-                )}
-              >
-                Side
-              </Button>
-              <Button
-                variant={attackDirection === "back" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onAttackDirectionChange("back")}
-                className={cn(
-                  "flex-1",
-                  attackDirection === "back" &&
-                    "bg-pink-600 hover:bg-pink-700 text-white"
-                )}
-              >
-                Back
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Combat Mode</Label>
-            <div className="flex gap-2">
-              <Button
-                variant={isPvP ? "default" : "outline"}
-                size="sm"
-                onClick={() => onIsPvPChange(true)}
-                className={cn(
-                  "flex-1 py-6",
-                  isPvP &&
-                    "bg-red-600 hover:bg-red-700 text-white"
-                )}
-              >
-                PvP
-              </Button>
-              <Button
-                variant={!isPvP ? "default" : "outline"}
-                size="sm"
-                onClick={() => onIsPvPChange(false)}
-                className={cn(
-                  "flex-1 py-6",
-                  !isPvP &&
-                    "bg-green-600 hover:bg-green-700 text-white"
-                )}
-              >
-                PvE
-              </Button>
-            </div>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

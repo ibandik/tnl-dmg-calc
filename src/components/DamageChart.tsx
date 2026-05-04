@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef, memo } from "react";
+import { useMemo, useCallback, useRef, memo, useDeferredValue } from "react";
 import {
   LineChart,
   Line,
@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Build, Enemy, StatKey, ChartPoint } from "../types";
 import { calculateDamage, calculateDPS } from "../calculations";
+import { formatCompact } from "../lib/utils";
 
 interface DamageChartProps {
   builds: Build[];
@@ -31,6 +32,7 @@ interface DamageChartProps {
   castTime?: number;
   skillCooldownSpecialization?: number;
   speedLimiter?: 'cooldown' | 'castTime';
+  monsterDamageBonus?: number;
 }
 
 const COLORS = [
@@ -60,6 +62,7 @@ export const DamageChart = memo(function DamageChart({
   castTime = 1,
   skillCooldownSpecialization = 0,
   speedLimiter = 'cooldown',
+  monsterDamageBonus = 0,
 }: DamageChartProps) {
   // Determine if the stat belongs to build or enemy based on the stat name
   const statBelongsToBuild = useMemo(() => {
@@ -100,16 +103,22 @@ export const DamageChart = memo(function DamageChart({
     return Math.round((currentStatValue - min) / step) * step + min;
   }, [currentStatValue, xAxisRange]);
 
+  // Defer expensive inputs so typing stays snappy; chart recomputes after the
+  // user pauses instead of on every keystroke.
+  const deferredBuilds = useDeferredValue(builds);
+  const deferredEnemy = useDeferredValue(enemy);
+  const deferredXAxisRange = useDeferredValue(xAxisRange);
+
   const chartData = useMemo(() => {
     const data: ChartPoint[] = [];
-    const { min, max, step } = xAxisRange;
+    const { min, max, step } = deferredXAxisRange;
 
     for (let x = min; x <= max; x += step) {
       const point: ChartPoint = { x };
 
-      builds.forEach((build, index) => {
+      deferredBuilds.forEach((build, index) => {
         let modifiedBuild = { ...build };
-        let modifiedEnemy = { ...enemy };
+        let modifiedEnemy = { ...deferredEnemy };
 
         // Only modify the entity that actually has the xAxisStat
         if (statBelongsToBuild) {
@@ -134,7 +143,8 @@ export const DamageChart = memo(function DamageChart({
             weakenSkillFlatAdd,
             skillCooldownSpecialization,
             speedLimiter === 'cooldown',  // useCDR
-            speedLimiter === 'castTime'    // useAttackSpeed
+            speedLimiter === 'castTime',   // useAttackSpeed
+            monsterDamageBonus
           );
           point[`build${index}`] = dps;
         } else {
@@ -148,7 +158,8 @@ export const DamageChart = memo(function DamageChart({
             skillFlatAdd,
             hitsPerCast,
             weakenSkillPotency,
-            weakenSkillFlatAdd
+            weakenSkillFlatAdd,
+            monsterDamageBonus
           );
           point[`build${index}`] = breakdown[yMetric];
         }
@@ -159,10 +170,10 @@ export const DamageChart = memo(function DamageChart({
 
     return data;
   }, [
-    builds,
-    enemy,
+    deferredBuilds,
+    deferredEnemy,
+    deferredXAxisRange,
     xAxisStat,
-    xAxisRange,
     yMetric,
     combatType,
     attackDirection,
@@ -177,6 +188,7 @@ export const DamageChart = memo(function DamageChart({
     weakenSkillPotency,
     weakenSkillFlatAdd,
     speedLimiter,
+    monsterDamageBonus,
   ]);
 
   const formatYAxis = useCallback(
@@ -184,7 +196,7 @@ export const DamageChart = memo(function DamageChart({
       if (yMetric.includes("Chance")) {
         return `${(value * 100).toFixed(1)}%`;
       }
-      return value.toFixed(0);
+      return formatCompact(value);
     },
     [yMetric]
   );
@@ -225,17 +237,17 @@ export const DamageChart = memo(function DamageChart({
           if (yMetric.includes("Chance")) {
             result = [`${(value * 100).toFixed(1)}%`, buildName];
           } else {
-            result = [value.toFixed(0), buildName];
+            result = [formatCompact(value), buildName];
           }
         } else {
-          result = [value.toString(), name];
+          result = [formatCompact(value), name];
         }
       } else {
         const buildName = builds[buildIndex]?.name || `Build ${buildIndex + 1}`;
         if (yMetric.includes("Chance")) {
           result = [`${(value * 100).toFixed(1)}%`, buildName];
         } else {
-          result = [value.toFixed(0), buildName];
+          result = [formatCompact(value), buildName];
         }
       }
 
@@ -291,10 +303,13 @@ export const DamageChart = memo(function DamageChart({
           <XAxis
             dataKey="x"
             label={{ value: xAxisStat, position: "insideBottom", offset: -5 }}
+            tickFormatter={formatCompact}
           />
           <YAxis
             tickFormatter={formatYAxis}
             label={{ value: yMetric, angle: -90, position: "insideLeft" }}
+            domain={["auto", "auto"]}
+            allowDataOverflow={false}
           />
           <Tooltip
             formatter={formatTooltip}

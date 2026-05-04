@@ -73,7 +73,11 @@ export function ImportDialog({
       if (importType === "build") {
         onImportBuild(parsedBuild);
       } else {
-        // Convert build data to enemy format
+        // Pull boss-variant enemy stats directly from the raw text
+        const num = (re: RegExp) => {
+          const m = pastedText.match(re);
+          return m ? parseInt(m[1].replace(/,/g, ""), 10) : undefined;
+        };
         const enemyData: Enemy = {
           name: buildName,
           meleeEndurance: parsedBuild.meleeEndurance || 1000,
@@ -91,6 +95,14 @@ export function ImportDialog({
           damageReduction: parsedBuild.damageReduction || 0,
           skillDamageResistance: parsedBuild.skillDamageResistance || 0,
           weakenResistance: extractWeakenResistance(pastedText),
+          // Boss variants from raw paste
+          bossDamageReduction: num(/Boss Damage Reduction\s+([\d,]+)/i),
+          bossMeleeEndurance: num(/Boss Melee Endurance\s+([\d,]+)/i),
+          bossRangedEndurance: num(/Boss Ranged Endurance\s+([\d,]+)/i),
+          bossMagicEndurance: num(/Boss Magic Endurance\s+([\d,]+)/i),
+          bossMeleeEvasion: num(/Boss Melee Evasion\s+([\d,]+)/i),
+          bossRangedEvasion: num(/Boss Ranged Evasion\s+([\d,]+)/i),
+          bossMagicEvasion: num(/Boss Magic Evasion\s+([\d,]+)/i),
         };
         onImportEnemy(enemyData);
       }

@@ -15,9 +15,10 @@ import { ChartControls } from "./components/ChartControls";
 import { ImportDialog } from "./components/ImportDialog";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { SkillConfigForm } from "./components/SkillConfigForm";
+import { SensitivityPanel } from "./components/SensitivityPanel";
 import { Button } from "./components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { Trash2, Share2 } from "lucide-react";
+import { Trash2, Share2, Star } from "lucide-react";
 import { serializeState } from "./utils/urlState";
 
 // Lazy load heavy components
@@ -42,6 +43,8 @@ const BuildTabs = memo(() => {
   const shareState = useStore((state) => state.shareState);
   const speedLimiter = useStore((state) => state.speedLimiter);
   const setSpeedLimiter = useStore((state) => state.setSpeedLimiter);
+  const currentBuildIndex = useStore((state) => state.currentBuildIndex);
+  const setCurrentBuild = useStore((state) => state.setCurrentBuild);
 
   return (
     <div className="lg:col-span-1 space-y-6 overflow-y-auto">
@@ -104,6 +107,24 @@ const BuildTabs = memo(() => {
                   value={index.toString()}
                   className="text-xs flex-shrink-0 min-w-[100px]"
                 >
+                  <span
+                    role="button"
+                    title={currentBuildIndex === index ? "Unmark as current build" : "Mark as current build"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentBuild(index);
+                    }}
+                    className="mr-1 inline-flex items-center"
+                  >
+                    <Star
+                      className={
+                        "h-3 w-3 " +
+                        (currentBuildIndex === index
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-muted-foreground")
+                      }
+                    />
+                  </span>
                   {build.name || `Build ${index + 1}`}
                 </TabsTrigger>
               ))}
@@ -231,6 +252,7 @@ function App() {
   const currentEnemy = useActiveEnemy();
   const chartConfig = useChartConfig() as any;
   const activeBuildTab = useStore((state) => state.activeBuildTab);
+  const currentBuildIndex = useStore((state) => state.currentBuildIndex);
   
   // Chart control actions
   const setXAxisStat = useStore((state) => state.setXAxisStat);
@@ -384,10 +406,6 @@ function App() {
             onYMetricChange={setYMetric}
             combatType={chartConfig.combatType}
             onCombatTypeChange={setCombatType}
-            attackDirection={chartConfig.attackDirection}
-            onAttackDirectionChange={setAttackDirection}
-            isPvP={chartConfig.isPvP}
-            onIsPvPChange={setIsPvP}
           />
 
           <div className="min-h-[500px]">
@@ -399,8 +417,8 @@ function App() {
                 xAxisRange={chartConfig.xAxisRange}
                 yMetric={chartConfig.yMetric}
                 combatType={chartConfig.combatType}
-                attackDirection={chartConfig.attackDirection}
-                isPvP={chartConfig.isPvP}
+                attackDirection="back"
+                isPvP={false}
                 skillPotency={chartConfig.skillConfig.skillPotency}
                 skillFlatAdd={chartConfig.skillConfig.skillFlatAdd}
                 hitsPerCast={chartConfig.skillConfig.hitsPerCast}
@@ -410,9 +428,22 @@ function App() {
                 castTime={chartConfig.skillConfig.castTime}
                 skillCooldownSpecialization={chartConfig.skillConfig.skillCooldownSpecialization}
                 speedLimiter={chartConfig.speedLimiter}
+                monsterDamageBonus={chartConfig.skillConfig.monsterDamageBonus || 0}
               />
             </Suspense>
           </div>
+
+          <SensitivityPanel
+            currentBuild={
+              currentBuildIndex !== null && builds[currentBuildIndex]
+                ? builds[currentBuildIndex]
+                : null
+            }
+            enemy={currentEnemy}
+            combatType={chartConfig.combatType}
+            speedLimiter={chartConfig.speedLimiter}
+            skillConfig={chartConfig.skillConfig}
+          />
 
           {builds.length > 0 && builds[parseInt(activeBuildTab)] && (
             <Suspense fallback={<div className="flex items-center justify-center h-[200px]">Loading formula...</div>}>
@@ -420,8 +451,8 @@ function App() {
                 build={builds[parseInt(activeBuildTab)]}
                 enemy={currentEnemy}
                 combatType={chartConfig.combatType}
-                attackDirection={chartConfig.attackDirection}
-                isPvP={chartConfig.isPvP}
+                attackDirection="back"
+                isPvP={false}
                 skillPotency={chartConfig.skillConfig.skillPotency}
                 skillFlatAdd={chartConfig.skillConfig.skillFlatAdd}
                 hitsPerCast={chartConfig.skillConfig.hitsPerCast}

@@ -27,6 +27,18 @@ export interface Build {
   meleeHeavyAttack?: number;
   rangedHeavyAttack?: number;
   magicHeavyAttack?: number;
+  heavyAttackDamage?: number; // percentage, e.g. 30 for +30%
+
+  // Boss offensive bonuses (additive when target is a boss)
+  bossMeleeCritical?: number;
+  bossRangedCritical?: number;
+  bossMagicCritical?: number;
+  bossMeleeHit?: number;
+  bossRangedHit?: number;
+  bossMagicHit?: number;
+  bossMeleeHeavyAttack?: number;
+  bossRangedHeavyAttack?: number;
+  bossMagicHeavyAttack?: number;
 
   // Hit stats
   meleeHit?: number;
