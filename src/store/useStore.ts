@@ -169,7 +169,7 @@ export const useStore = create<AppState>()(
       yMetric: initialUrlState?.yMetric || "expectedDamage",
       combatType: initialUrlState?.combatType || "melee",
       attackDirection: initialUrlState?.attackDirection || "front",
-      isPvP: initialUrlState?.isPvP ?? true,
+      isPvP: initialUrlState?.isPvP ?? false,
       skillConfig: initialUrlState?.skillConfig || defaultSkillConfig,
       activeBuildTab: initialUrlState?.activeBuildTab || "0",
       activeEnemyTab: initialUrlState?.activeEnemyTab || "0",

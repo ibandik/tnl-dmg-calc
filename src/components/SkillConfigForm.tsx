@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 import { Info } from "lucide-react";
+import { Section } from "./ui/section";
 
 interface SkillConfig {
   skillPotency: number;
@@ -28,229 +29,157 @@ interface SkillConfigFormProps {
 
 export function SkillConfigForm({ config, onChange }: SkillConfigFormProps) {
   function handleInputChange(field: keyof SkillConfig, value: string) {
-    const numValue = parseFloat(value) || 0;
+    if (value === "" || value === "-") {
+      onChange({ ...config, [field]: undefined as any });
+      return;
+    }
+    const numValue = parseFloat(value);
+    if (Number.isNaN(numValue)) return;
     onChange({ ...config, [field]: numValue });
   }
+
+  const Field = ({
+    id,
+    label,
+    value,
+    placeholder,
+    step,
+    info,
+  }: {
+    id: keyof SkillConfig;
+    label: string;
+    value: number | undefined;
+    placeholder?: string;
+    step?: string;
+    info?: React.ReactNode;
+  }) => (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1">
+        <Label htmlFor={id as string} className="text-xs">
+          {label}
+        </Label>
+        {info && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent>{info}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+      <Input
+        id={id as string}
+        type="number"
+        step={step}
+        value={value ?? ""}
+        onChange={(e) => handleInputChange(id, e.target.value)}
+        className="h-8 text-xs"
+        placeholder={placeholder}
+      />
+    </div>
+  );
 
   return (
     <TooltipProvider>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Skill Configuration</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Skill</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-4 gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-1">
-                <Label htmlFor="skillPotency" className="text-xs">
-                  Skill Potency
-                </Label>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Skill damage multiplier as a decimal.
-                      <br />
-                      Examples:
-                      <br />
-                      • 120% base damage = 1.2
-                      <br />
-                      • 85% base damage = 0.85
-                      <br />
-                      • 250% base damage = 2.5
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <Input
-                id="skillPotency"
-                type="number"
-                step="0.1"
-                value={config.skillPotency}
-                onChange={(e) =>
-                  handleInputChange("skillPotency", e.target.value)
-                }
-                className="h-8 text-xs"
-                placeholder="1.0"
-              />
-            </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <Label htmlFor="skillFlatAdd" className="text-xs">
-                Skill Flat Add
-              </Label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">
-                    Flat damage bonus added after skill potency.
-                    <br />
-                    Formula: (Base DMG × Potency) + Flat Add
-                    <br />
-                    <br />
-                    Example with 1000 base damage:
-                    <br />
-                    • 1.2 potency + 500 flat = 1700 total
-                    <br />
-                    • (1000 × 1.2) + 500 = 1700
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <Input
-              id="skillFlatAdd"
-              type="number"
-              value={config.skillFlatAdd}
-              onChange={(e) =>
-                handleInputChange("skillFlatAdd", e.target.value)
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            <Field
+              id="skillPotency"
+              label="Potency"
+              value={config.skillPotency}
+              step="0.1"
+              placeholder="1.0"
+              info={
+                <p className="max-w-xs">
+                  Decimal multiplier of base damage.
+                  <br />120% = 1.2 · 250% = 2.5
+                </p>
               }
-              className="h-8 text-xs"
-              placeholder="0"
             />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="hitsPerCast" className="text-xs">
-              Hits Per Cast
-            </Label>
-            <Input
+            <Field
+              id="skillFlatAdd"
+              label="Flat Add"
+              value={config.skillFlatAdd}
+              placeholder="0"
+              info={<p className="max-w-xs">Flat damage added after potency.</p>}
+            />
+            <Field
               id="hitsPerCast"
-              type="number"
-              min="1"
+              label="Hits / Cast"
               value={config.hitsPerCast}
-              onChange={(e) => handleInputChange("hitsPerCast", e.target.value)}
-              className="h-8 text-xs"
               placeholder="1"
             />
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <Label htmlFor="monsterDamageBonus" className="text-xs">
-                +% Damage to Monsters
-              </Label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">
-                    Per-skill bonus damage vs monsters (PvE only).
-                    <br />
-                    Example: skill text says "+60% damage to monsters" → enter <b>60</b>.
-                    <br />
-                    Applied as a multiplier in the damage chain.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <Input
+
+          <div className="grid grid-cols-3 gap-3">
+            <Field
+              id="cooldownTime"
+              label="Cooldown (s)"
+              value={config.cooldownTime}
+              step="0.1"
+              placeholder="10"
+            />
+            <Field
+              id="castTime"
+              label="Cast (s)"
+              value={config.castTime}
+              step="0.1"
+              placeholder="1"
+            />
+            <Field
               id="monsterDamageBonus"
-              type="number"
+              label="+% to Monsters"
+              value={config.monsterDamageBonus}
               step="1"
-              value={config.monsterDamageBonus || 0}
-              onChange={(e) => handleInputChange("monsterDamageBonus" as keyof SkillConfig, e.target.value)}
-              className="h-8 text-xs"
               placeholder="0"
+              info={
+                <p className="max-w-xs">
+                  Per-skill bonus damage vs monsters (PvE only).
+                  <br />"+60% to monsters" → enter <b>60</b>.
+                </p>
+              }
             />
           </div>
-        </div>
-        <div className="mt-4 pt-4 border-t">
-          <h4 className="text-sm font-medium mb-3">Weaken Bonus (Applied when target is weakened)</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="weakenSkillPotency" className="text-xs">
-                Weaken Skill Potency
-              </Label>
-              <Input
-                id="weakenSkillPotency"
-                type="number"
-                step="0.1"
-                value={config.weakenSkillPotency}
-                onChange={(e) =>
-                  handleInputChange("weakenSkillPotency", e.target.value)
-                }
-                className="h-8 text-xs"
-                placeholder="0"
-              />
+
+          <Section title="Advanced">
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field
+                  id="weakenSkillPotency"
+                  label="Weaken Potency Bonus"
+                  value={config.weakenSkillPotency}
+                  step="0.1"
+                  placeholder="0"
+                  info={
+                    <p className="max-w-xs">
+                      Extra potency added when target is weakened.
+                    </p>
+                  }
+                />
+                <Field
+                  id="weakenSkillFlatAdd"
+                  label="Weaken Flat Bonus"
+                  value={config.weakenSkillFlatAdd}
+                  placeholder="0"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <Field
+                  id="skillCooldownSpecialization"
+                  label="CD Specialization (s)"
+                  value={config.skillCooldownSpecialization}
+                  step="0.1"
+                  placeholder="0"
+                />
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="weakenSkillFlatAdd" className="text-xs">
-                Weaken Skill Flat Add
-              </Label>
-              <Input
-                id="weakenSkillFlatAdd"
-                type="number"
-                value={config.weakenSkillFlatAdd}
-                onChange={(e) =>
-                  handleInputChange("weakenSkillFlatAdd", e.target.value)
-                }
-                className="h-8 text-xs"
-                placeholder="0"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 pt-4 border-t">
-          <h4 className="text-sm font-medium mb-3">Skill Timing</h4>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="cooldownTime" className="text-xs">
-                Cooldown Time (s)
-              </Label>
-              <Input
-                id="cooldownTime"
-                type="number"
-                step="0.1"
-                value={config.cooldownTime}
-                onChange={(e) =>
-                  handleInputChange("cooldownTime", e.target.value)
-                }
-                className="h-8 text-xs"
-                placeholder="10"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="castTime" className="text-xs">
-                Cast Time (s)
-              </Label>
-              <Input
-                id="castTime"
-                type="number"
-                step="0.1"
-                value={config.castTime}
-                onChange={(e) =>
-                  handleInputChange("castTime", e.target.value)
-                }
-                className="h-8 text-xs"
-                placeholder="1"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="skillCooldownSpecialization" className="text-xs">
-                CD Specialization (s)
-              </Label>
-              <Input
-                id="skillCooldownSpecialization"
-                type="number"
-                step="0.1"
-                value={config.skillCooldownSpecialization}
-                onChange={(e) =>
-                  handleInputChange("skillCooldownSpecialization", e.target.value)
-                }
-                className="h-8 text-xs"
-                placeholder="0"
-              />
-            </div>
-          </div>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          These settings apply globally to all builds
-        </p>
-      </CardContent>
-    </Card>
+          </Section>
+        </CardContent>
+      </Card>
     </TooltipProvider>
   );
 }

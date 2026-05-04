@@ -5,19 +5,43 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { X } from "lucide-react";
+import { Section } from "./ui/section";
 
 interface EnemyFormProps {
   enemy: Enemy;
   onChange: (enemy: Enemy) => void;
   onPropertyChange?: <K extends keyof Enemy>(key: K, value: Enemy[K]) => void;
   onRemove?: () => void;
+  combatType: "melee" | "ranged" | "magic";
+  isPvP: boolean;
 }
 
-export const EnemyForm = memo(function EnemyForm({ enemy, onChange, onPropertyChange, onRemove }: EnemyFormProps) {
+const TYPE_LABEL: Record<"melee" | "ranged" | "magic", string> = {
+  melee: "Melee",
+  ranged: "Ranged",
+  magic: "Magic",
+};
+
+export const EnemyForm = memo(function EnemyForm({
+  enemy,
+  onChange,
+  onPropertyChange,
+  onRemove,
+  combatType,
+  isPvP,
+}: EnemyFormProps) {
   const handleInputChange = useCallback(
     (field: keyof Enemy, value: string) => {
-      const numValue = parseFloat(value) || 0;
-      // Use the more efficient property updater if available
+      if (value === "" || value === "-") {
+        if (onPropertyChange) {
+          onPropertyChange(field, undefined as any);
+        } else {
+          onChange({ ...enemy, [field]: undefined as any });
+        }
+        return;
+      }
+      const numValue = parseFloat(value);
+      if (Number.isNaN(numValue)) return;
       if (onPropertyChange) {
         onPropertyChange(field, numValue);
       } else {
@@ -29,9 +53,8 @@ export const EnemyForm = memo(function EnemyForm({ enemy, onChange, onPropertyCh
 
   const handleNameChange = useCallback(
     (value: string) => {
-      // Use the more efficient property updater if available
       if (onPropertyChange) {
-        onPropertyChange('name', value);
+        onPropertyChange("name", value);
       } else {
         onChange({ ...enemy, name: value });
       }
@@ -39,16 +62,51 @@ export const EnemyForm = memo(function EnemyForm({ enemy, onChange, onPropertyCh
     [enemy, onChange, onPropertyChange]
   );
 
+  const Field = ({
+    field,
+    label,
+    placeholder,
+  }: {
+    field: keyof Enemy;
+    label: string;
+    placeholder?: string;
+  }) => (
+    <div className="space-y-1">
+      <Label htmlFor={field as string} className="text-xs">
+        {label}
+      </Label>
+      <Input
+        id={field as string}
+        type="number"
+        value={(enemy[field] as number | undefined) ?? ""}
+        onChange={(e) => handleInputChange(field, e.target.value)}
+        className="h-8 text-xs"
+        placeholder={placeholder}
+      />
+    </div>
+  );
+
+  // Combat-type-specific keys
+  const cap = combatType[0].toUpperCase() + combatType.slice(1);
+  const defKey = `${combatType}Defense` as keyof Enemy;
+  const evKey = `${combatType}Evasion` as keyof Enemy;
+  const enKey = `${combatType}Endurance` as keyof Enemy;
+  const heavyEvKey = `${combatType}HeavyAttackEvasion` as keyof Enemy;
+  const bossEvKey = `boss${cap}Evasion` as keyof Enemy;
+  const bossEnKey = `boss${cap}Endurance` as keyof Enemy;
+  const bossHeavyEvKey = `boss${cap}HeavyAttackEvasion` as keyof Enemy;
+  const typeName = TYPE_LABEL[combatType];
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-        <CardTitle className="text-lg flex-1">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle className="flex-1">
           <Input
             type="text"
             value={enemy.name}
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder="Enemy Name"
-            className="font-semibold bg-transparent px-2 py-6 md:text-3xl focus:ring-0"
+            className="font-semibold bg-transparent px-2 text-base h-9 focus:ring-0"
           />
         </CardTitle>
         {onRemove && (
@@ -62,278 +120,41 @@ export const EnemyForm = memo(function EnemyForm({ enemy, onChange, onPropertyCh
           </Button>
         )}
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">
-            Damage Reduction
-          </h4>
+      <CardContent className="space-y-2">
+        <Section title={`${typeName} — Defense, Evasion, Endurance`} defaultOpen>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="damageReduction" className="text-xs">
-                Damage Reduction
-              </Label>
-              <Input
-                id="damageReduction"
-                type="number"
-                value={enemy.damageReduction || 0}
-                onChange={(e) =>
-                  handleInputChange("damageReduction", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="bossDamageReduction" className="text-xs">
-                Boss Damage Reduction
-              </Label>
-              <Input
-                id="bossDamageReduction"
-                type="number"
-                value={enemy.bossDamageReduction || 0}
-                onChange={(e) =>
-                  handleInputChange("bossDamageReduction", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
+            <Field field={defKey} label={`${typeName} Defense`} />
+            <Field field={evKey} label={`${typeName} Evasion`} />
+            <Field field={enKey} label={`${typeName} Endurance`} />
+            <Field field={heavyEvKey} label={`${typeName} Heavy Evasion`} />
           </div>
-        </div>
+        </Section>
 
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">
-            Defense (Melee/Ranged/Magic)
-          </h4>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="meleeDefense" className="text-xs">
-                Melee Defense
-              </Label>
-              <Input
-                id="meleeDefense"
-                type="number"
-                value={enemy.meleeDefense || 0}
-                onChange={(e) =>
-                  handleInputChange("meleeDefense", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
+        {!isPvP && (
+          <Section title={`${typeName} — Boss Variants`} defaultOpen>
+            <div className="grid grid-cols-2 gap-3">
+              <Field field={bossEvKey} label={`Boss ${typeName} Evasion`} />
+              <Field field={bossEnKey} label={`Boss ${typeName} Endurance`} />
+              <Field field={bossHeavyEvKey} label={`Boss ${typeName} Heavy Evasion`} />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="rangedDefense" className="text-xs">
-                Ranged Defense
-              </Label>
-              <Input
-                id="rangedDefense"
-                type="number"
-                value={enemy.rangedDefense || 0}
-                onChange={(e) =>
-                  handleInputChange("rangedDefense", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="magicDefense" className="text-xs">
-                Magic Defense
-              </Label>
-              <Input
-                id="magicDefense"
-                type="number"
-                value={enemy.magicDefense || 0}
-                onChange={(e) =>
-                  handleInputChange("magicDefense", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-          </div>
-        </div>
+          </Section>
+        )}
 
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">
-            Evasion (Melee/Ranged/Magic)
-          </h4>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="meleeEvasion" className="text-xs">
-                Melee Evasion
-              </Label>
-              <Input
-                id="meleeEvasion"
-                type="number"
-                value={enemy.meleeEvasion || 0}
-                onChange={(e) =>
-                  handleInputChange("meleeEvasion", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="rangedEvasion" className="text-xs">
-                Ranged Evasion
-              </Label>
-              <Input
-                id="rangedEvasion"
-                type="number"
-                value={enemy.rangedEvasion || 0}
-                onChange={(e) =>
-                  handleInputChange("rangedEvasion", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="magicEvasion" className="text-xs">
-                Magic Evasion
-              </Label>
-              <Input
-                id="magicEvasion"
-                type="number"
-                value={enemy.magicEvasion || 0}
-                onChange={(e) =>
-                  handleInputChange("magicEvasion", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">
-            Endurance (Melee/Ranged/Magic)
-          </h4>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="meleeEndurance" className="text-xs">
-                Melee Endurance
-              </Label>
-              <Input
-                id="meleeEndurance"
-                type="number"
-                value={enemy.meleeEndurance || 0}
-                onChange={(e) =>
-                  handleInputChange("meleeEndurance", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="rangedEndurance" className="text-xs">
-                Ranged Endurance
-              </Label>
-              <Input
-                id="rangedEndurance"
-                type="number"
-                value={enemy.rangedEndurance || 0}
-                onChange={(e) =>
-                  handleInputChange("rangedEndurance", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="magicEndurance" className="text-xs">
-                Magic Endurance
-              </Label>
-              <Input
-                id="magicEndurance"
-                type="number"
-                value={enemy.magicEndurance || 0}
-                onChange={(e) =>
-                  handleInputChange("magicEndurance", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">
-            Heavy Attack Evasion
-          </h4>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="meleeHeavyAttackEvasion" className="text-xs">
-                Melee Heavy Evasion
-              </Label>
-              <Input
-                id="meleeHeavyAttackEvasion"
-                type="number"
-                value={enemy.meleeHeavyAttackEvasion || 0}
-                onChange={(e) =>
-                  handleInputChange("meleeHeavyAttackEvasion", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="rangedHeavyAttackEvasion" className="text-xs">
-                Ranged Heavy Evasion
-              </Label>
-              <Input
-                id="rangedHeavyAttackEvasion"
-                type="number"
-                value={enemy.rangedHeavyAttackEvasion || 0}
-                onChange={(e) =>
-                  handleInputChange("rangedHeavyAttackEvasion", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="magicHeavyAttackEvasion" className="text-xs">
-                Magic Heavy Evasion
-              </Label>
-              <Input
-                id="magicHeavyAttackEvasion"
-                type="number"
-                value={enemy.magicHeavyAttackEvasion || 0}
-                onChange={(e) =>
-                  handleInputChange("magicHeavyAttackEvasion", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">
-            Skill Resistance
-          </h4>
+        <Section title="Damage Reduction">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="skillDamageResistance" className="text-xs">
-                Skill Damage Resistance
-              </Label>
-              <Input
-                id="skillDamageResistance"
-                type="number"
-                value={enemy.skillDamageResistance || 0}
-                onChange={(e) =>
-                  handleInputChange("skillDamageResistance", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="weakenResistance" className="text-xs">
-                Weaken Resistance
-              </Label>
-              <Input
-                id="weakenResistance"
-                type="number"
-                value={enemy.weakenResistance || 0}
-                onChange={(e) =>
-                  handleInputChange("weakenResistance", e.target.value)
-                }
-                className="h-8 text-xs"
-              />
-            </div>
+            <Field field="damageReduction" label="Damage Reduction" />
+            {!isPvP && <Field field="bossDamageReduction" label="Boss Damage Reduction" />}
           </div>
-        </div>
+        </Section>
+
+        <Section title="Resistances">
+          <div className="grid grid-cols-2 gap-3">
+            <Field field="skillDamageResistance" label="Skill Damage Resistance" />
+            <Field field="weakenResistance" label="Weaken Resistance" />
+            <Field field="criticalDamageResistance" label="Crit Damage Resistance %" />
+            <Field field="shieldBlockChance" label="Shield Block Chance" />
+          </div>
+        </Section>
       </CardContent>
     </Card>
   );

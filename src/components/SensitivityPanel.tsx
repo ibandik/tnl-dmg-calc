@@ -99,20 +99,20 @@ export function SensitivityPanel({
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1">
             <Label htmlFor="ratingDelta" className="text-xs">+Δ rating stats</Label>
-            <Input id="ratingDelta" type="number" value={ratingDelta}
-              onChange={(e) => setRatingDelta(parseFloat(e.target.value) || 0)}
+            <Input id="ratingDelta" type="number" value={Number.isFinite(ratingDelta) ? ratingDelta : ""}
+              onChange={(e) => setRatingDelta(e.target.value === "" ? NaN : parseFloat(e.target.value))}
               className="h-8 text-xs" />
           </div>
           <div className="space-y-1">
             <Label htmlFor="percentDelta" className="text-xs">+Δ percent stats</Label>
-            <Input id="percentDelta" type="number" value={percentDelta}
-              onChange={(e) => setPercentDelta(parseFloat(e.target.value) || 0)}
+            <Input id="percentDelta" type="number" value={Number.isFinite(percentDelta) ? percentDelta : ""}
+              onChange={(e) => setPercentDelta(e.target.value === "" ? NaN : parseFloat(e.target.value))}
               className="h-8 text-xs" />
           </div>
           <div className="space-y-1">
             <Label htmlFor="weaponDelta" className="text-xs">+Δ weapon DMG</Label>
-            <Input id="weaponDelta" type="number" value={weaponDelta}
-              onChange={(e) => setWeaponDelta(parseFloat(e.target.value) || 0)}
+            <Input id="weaponDelta" type="number" value={Number.isFinite(weaponDelta) ? weaponDelta : ""}
+              onChange={(e) => setWeaponDelta(e.target.value === "" ? NaN : parseFloat(e.target.value))}
               className="h-8 text-xs" />
           </div>
         </div>
